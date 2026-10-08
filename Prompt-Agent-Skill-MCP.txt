@@ -1,0 +1,382 @@
+=============================
+Step#1A
+=============================
+Create only these four files in the current workspace. Do not add any other files. Do not create expenses.csv.
+Do not create or use a virtual environment (no .venv, no venv, no virtualenv). Use the system Python only.
+
+1. README.md
+2. Agent.py
+3. .env
+4. .gitignore
+
+Let PROJECT be the name of the current workspace/folder (the VS Code root directory name). Use that name everywhere a project label is needed.
+
+Leave README.md, Agent.py, and .env empty except for a one-line comment in each so the file is not blank:
+- README.md: # <PROJECT>
+- Agent.py: # <PROJECT> step 1 — today's expenses
+- .env: # LLM keys go here later
+
+.gitignore should contain:
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+Do not write the expense logic yet. Do not call any LLM yet. Do not create folders. Just add those four files under the current workspace root.
+
+=============================
+Step#1B
+=============================
+Update the four existing files in this workspace. Do not create expenses.csv. Do not create extra files. Do not use Azure Foundry. OpenAI only.
+Do not create or use a virtual environment. Run everything with the system Python only. If it is missing, install a stable version from an official source using the appropriate method for this operating system and put the Python on the PATH.
+
+Runtime LLM:
+- Read LLM_API_KEY from the process environment with os.getenv("LLM_API_KEY"). That variable is already set on this Windows machine. Do not hardcode a key. Do not write a real key into any file.
+- Model id must be exactly: gpt-4o-mini
+- OPENAI_MODEL can live in .env as gpt-4o-mini, or default to gpt-4o-mini in code if unset.
+- Do not use the openai Python package.
+- Do not use httpx or httpx2.
+- Call https://api.openai.com/v1/chat/completions with urllib.request and json.
+
+--- README.md ---
+Short README:
+- <PROJECT> step 1: hardcoded today's shipment expenses printed in the terminal
+- Run: python Agent.py
+- Uses OpenAI model gpt-4o-mini
+- API key comes from the Windows environment variable LLM_API_KEY
+- LLM call uses urllib, not the openai package
+- Later: skill for a nicer table, then MCP + CSV + HTML
+
+--- .gitignore ---
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+--- .env ---
+Only:
+OPENAI_MODEL=gpt-4o-mini
+
+No API key in this file.
+
+--- Agent.py ---
+Runnable Python. Standard library only (os, json, urllib.request).
+
+Hardcode today's delivery as a list of dicts (item, vendor, qty, unit_price):
+
+1. Roma tomatoes, FreshFarm Produce, 12, 1.25
+2. Basil bunches, GreenLeaf Herbs, 6, 2.40
+3. Olive oil 1L, Mediterranean Oils Co, 2, 18.50
+4. Chicken breasts 5lb, Hillside Poultry, 3, 14.75
+5. Sourdough loaves, Dawn Bakery, 8, 4.10
+6. Heavy cream pints, Meadow Dairy, 4, 3.85
+
+Compute line_total = qty * unit_price and a grand total in Python. The LLM must not invent the math.
+
+Print a simple terminal report:
+- title: <PROJECT> — today's shipment
+- one line per item: item, vendor, qty, unit price, line total
+- TODAY TOTAL with 2 decimals
+
+Then:
+key = os.getenv("LLM_API_KEY")
+model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+
+If key is missing, print:
+"LLM skipped: LLM_API_KEY is not set in the environment."
+Do not crash.
+
+If key is present, POST JSON to https://api.openai.com/v1/chat/completions
+Headers: Authorization Bearer <key>, Content-Type application/json
+Body: model gpt-4o-mini, one user message that includes the already-computed table and TODAY TOTAL, and asks for two sentences a chef would say about today's delivery spend.
+Print the model text under "Chef says:".
+If the HTTP call fails, print "LLM error:" and the status/reason. Do not crash.
+Never print the API key.
+
+No argparse. No CSV. No HTML. No MCP. No Foundry. No pip packages required.
+No virtual environment.
+
+After writing the files, tell me the exact command to run.
+
+=============================
+Step#2 (Skill)
+=============================
+Step 2 for <PROJECT>. One shot. Edit existing files and add SKILL.md. Do not create expenses.csv. Do not add HTML. Do not add MCP. Do not use Azure Foundry. Do not use the openai pip package. Keep urllib.request for any LLM call.
+Do not create or use a virtual environment. Use the system Python only.
+
+Create SKILL.md in the project root. This skill is the recipe for printing today's shipment as a clean terminal table.
+
+SKILL.md must say:
+- Name: format-expense-table
+- When to use: after today's expenses are totaled
+- Rules: do not change the numbers; only format
+- Columns: Item | Vendor | Qty | Unit price | Line total
+- Right-align Qty and money
+- Money as $X.XX
+- Header row, dash separator, one row per item, then a TOTAL row with the grand total in the last column
+- Title line: <PROJECT> — today's shipment (formatted)
+
+Update Agent.py:
+1. Keep the same hardcoded six items and the same Python math.
+2. First print the current simple report exactly as step 1 (pipe-separated lines plus TODAY TOTAL).
+3. Print a blank line, then a line of 60 equals signs, then the exact text: Applying the skill now., then another line of 60 equals signs, then a blank line.
+4. Load SKILL.md from the same folder as Agent.py. If the file is missing, print that and stop the formatted section. Do not crash.
+5. Apply the skill rules in Python and print the formatted table. Do not let the LLM invent or change the totals.
+6. Then, if LLM_API_KEY is set, call https://api.openai.com/v1/chat/completions with gpt-4o-mini (or OPENAI_MODEL from env). Send the formatted table plus the skill text. Ask for two sentences a chef would say. Print under "Chef says:". If no key or the call fails, print a short skip/error line. Never print the key. Never crash.
+
+Update README.md to mention step 2: SKILL.md is loaded by Agent.py and used only for the second, formatted table.
+
+Leave .env as OPENAI_MODEL=gpt-4o-mini with no key.
+Leave .gitignore as it is unless .env is missing from it.
+
+After writing the files, tell me to run: python Agent.py
+
+
+=============================
+Step#3 (MCP-Detached)
+=============================
+This workspace is empty. Build a standalone Python MCP server from scratch. Do not assume any other project exists.
+
+Use the machine Python already on PATH. Do not create a virtual environment. Do not create .venv or venv. Do not add venv instructions. If a package is needed, say: python -m pip install -r requirements.txt
+
+The server reads a historical expenses CSV, answers spend queries, and writes HTML invoices. An agent in another project will connect later over STDIO or HTTP, list tools at runtime, and call them. This project is only the server.
+
+Same codebase, two ways to start:
+1. Local STDIO: python server.py
+2. HTTP on this machine: python server.py --http
+   http://127.0.0.1:8765
+   MCP URL: http://127.0.0.1:8765/mcp
+
+Do not use reportlab. Do not generate PDF. Do not use the openai pip package. Use urllib.request for any LLM call. Do not invent extra features.
+
+Create these files in the current workspace root:
+
+server.py
+tools/__init__.py
+tools/csv_tools.py
+tools/invoice_tools.py
+tools/llm_tools.py
+templates/invoice.html
+output/
+.env
+.gitignore
+requirements.txt
+README.md
+
+CSV columns: date,item,vendor,qty,unit_price
+Parse date as YYYY-MM-DD.
+qty and unit_price are numbers.
+
+Find expenses.csv in this order and print the path used:
+1. Environment variable EXPENSES_CSV
+2. data/expenses.csv in this workspace if that file exists
+3. One folder above this workspace: parent / expenses.csv
+
+Periods:
+- latest_delivery = rows for the maximum date in the CSV, not calendar today
+  file: output/invoice_latest_delivery.html
+  invoice number: INV-LATEST
+  label: Latest delivery (YYYY-MM-DD)
+  Do not say Today
+- year_to_date = January 1 of the current year through today
+  file: output/invoice_year_to_date.html
+  invoice number: INV-YTD-<year>
+- last_year = previous calendar year
+  file: output/invoice_last_year.html
+  invoice number: INV-<year>
+
+If environment INVOICE_COPY_DIR is set, also copy those three HTML files there.
+
+query_expenses(period, item=None):
+- missing or blank item = all items
+- item present = case-insensitive substring match on the item name
+- "tomato" must match "Roma tomatoes"
+- do not use exact-only item match
+- return csv_path, row_count, min_date, max_date, period, date range, matched_row_count, item filter, aggregated items, grand_total
+
+If the CSV is missing, raise a clear error that lists every path tried. Do not write an invoice that says no shipments when the file was not loaded.
+
+--- server.py ---
+Use the official MCP Python package named mcp.
+Default command starts the STDIO MCP server.
+python server.py --http starts streamable HTTP MCP on 127.0.0.1:8765
+python server.py --demo writes the three HTML invoices, prints their paths, and exits.
+
+Publish these tools with clear names and descriptions:
+1. query_expenses(period, item=None)
+   Description must say: optional item is a case-insensitive substring. Example: tomato matches Roma tomatoes.
+2. generate_invoice(period)
+   period is latest_delivery, year_to_date, or last_year
+   writes HTML and returns the file path
+3. chef_summary(text)
+   two short sentences about the supplied spend text
+
+--- tools/csv_tools.py ---
+Load and filter the CSV. Aggregate by item: item, vendor, total qty, average unit price, line total, grand total.
+
+--- tools/invoice_tools.py ---
+Fill templates/invoice.html and write the three files into output/.
+
+--- templates/invoice.html ---
+Professional one-page invoice. No logo.
+Title: Expense Invoice
+Sample company block:
+Kitchen Dock
+100 Market Street, Austin, TX 78701
+(512) 555-0142
+accounts@example.com
+Show invoice number, period, line-item table, grand total.
+Footer: Generated by Expense Invoice MCP server
+
+--- tools/llm_tools.py ---
+Model default gpt-4o-mini
+Read  LLM_API_KEY from the process environment first, then .env
+POST https://api.openai.com/v1/chat/completions with urllib
+Never print the API key
+
+--- .env ---
+OPENAI_MODEL=gpt-4o-mini
+ LLM_API_KEY=
+EXPENSES_CSV=
+INVOICE_COPY_DIR=
+MCP_HOST=127.0.0.1
+MCP_PORT=8765
+
+--- .gitignore ---
+.env
+__pycache__/
+output/*.html
+
+--- requirements.txt ---
+mcp
+
+--- README.md ---
+Use the machine Python already on PATH. No virtual environment.
+python -m pip install -r requirements.txt
+python server.py
+python server.py --http
+python server.py --demo
+Point EXPENSES_CSV at the expenses file if it is not in the parent folder.
+Agents connect with STDIO to server.py or with HTTP to http://127.0.0.1:8765/mcp
+Tool list is discovered at runtime.
+
+After writing the files, tell me the exact commands to install, run STDIO, run HTTP, and generate demo invoices. Do not mention a venv.
+
+
+====================================
+Step#4 (code Agent to call this MCP server)
+====================================
+This ChefAI workspace has only step 1 and step 2. Keep that terminal output exactly as it already works: plain shipment list, then Applying the skill now, then formatted table, then Chef says.
+
+Add MCP client wiring to a SEPARATE server project. Do not create an MCP server inside this ChefAI folder. Do not copy server.py here.
+
+Put these two settings at the top of Agent.py exactly like this. Do not change them. Do not substitute a real folder path. Do not use any path you see on disk or in chat history.
+
+MCP_SERVER_PY = r"PUT-THE-MCP-FOLDER-HERE\server.py"
+MCP_HTTP_URL = "http://127.0.0.1:8765/mcp"
+
+Leave MCP_SERVER_PY as that exact raw string. Do not search the workspace for server.py and fill it in.
+
+After step 2, print 60 equals signs, then exactly:
+Connect to MCP server
+then print:
+1. STDIO (start the local server process)
+2. HTTP (http://127.0.0.1:8765/mcp)
+Ask:
+Choose 1 or 2:
+Read the choice from input(). If the choice is invalid, print an error and skip MCP. Do not crash.
+
+If 1 STDIO:
+- If MCP_SERVER_PY is missing or the file does not exist, print that and skip.
+- Start that server.py with this machine's python as an MCP STDIO child process.
+- The agent launches the server. I should not need to start it first.
+
+If 2 HTTP:
+- Connect to MCP_HTTP_URL.
+- Do not start the server. If the URL is down, print: HTTP MCP is not running. In the server folder run: python server.py --http
+- Do not crash.
+
+After a successful connect:
+- List tools at runtime. Print names and one-line descriptions.
+- Do not hardcode which tool to call in if/else.
+- Every MCP call must come from a parsed LLM plan that has a real string tool name.
+
+NEVER call an MCP tool when name is missing.
+Before every tools/call:
+- tool name must be a non-empty string
+- tool name must be in the live tool list
+If the LLM returns tool None, tool "", done:true, or arguments only, do NOT call MCP. Treat that as the review step finished. Print: Planner finished. Do not print CallToolRequestParams errors.
+
+Parse planner JSON safely:
+- Accept {"tool":"...","arguments":{}}
+- Accept [{"tool":"...","arguments":{}}, ...]
+- Accept {"done": true, "reason":"..."}
+- Accept {"tool": null} or missing tool as done, not as a call
+- If two objects are comma-separated, wrap as an array
+- Drop any item whose tool is None, empty, or not in the live list
+- If nothing valid remains, stop that plan-call-review round
+
+LLM planning (default invoices and every user question):
+- gpt-4o-mini via urllib.request to https://api.openai.com/v1/chat/completions. No openai pip package.
+- First call for a goal: send the user question, today's date, CSV year range if known, live tool list with argument schemas, and these query rules.
+- Query rules the planner must follow:
+  - Map calendar language to period. Example: "2025" or "last year" or "all spending in 2025" = period last_year when the current year is 2026. "this year" or "YTD" = year_to_date. "latest delivery" = latest_delivery. Do not use year_to_date for a past calendar year.
+  - item is optional. Blank or omit item when the question is about all items or vendors.
+  - item is a case-insensitive substring, not an exact phrase.
+  - Normalize singular and plural before choosing item. Example: loaf, loaves, sourdough, bread → item "loaf" or "sourdough" so "Sourdough loaves" matches. tomato / tomatoes → "tomato". oil → "oil".
+  - Prefer query_expenses first when the user wants totals, counts, vendors, or a filtered spend. Use generate_invoice only when they ask for an invoice/report file.
+  - After data returns, do not emit another tool with name null. Emit {"done": true} if the sample answers the question.
+- Print Goal, then each VALID tool and arguments.
+- Call only valid tools. Print each result (trim long lists).
+- Then send a SAMPLE back to the LLM: item names, vendors, counts, grand_total, paths, plus the original question. Ask: enough to answer, or another tool? If enough, return {"done": true}.
+- Repeat plan-call-review up to 5 rounds, then stop.
+- After that goal, print two sentences under Chef says (loop): from the real results. Do not invent totals.
+
+Default invoice goal after connect (still planned by the LLM):
+Generate the three HTML invoices for latest_delivery, year_to_date, and last_year. Use the MCP tools. Do not skip any of the three periods.
+Print 60 equals signs and:
+Dynamic agent loop — LLM picks the MCP tool.
+Then run the planner for that goal. Print invoice paths the tools return.
+
+Then loop until quit. Do not exit after one question.
+
+Each user-question pass:
+1. Print exactly:
+   Three invoices are done. Any other question? (Q = quit)
+2. Read input(). Strip it.
+3. If blank, print:
+   Enter a question, or Q to quit.
+   Show the prompt again. Do not exit.
+4. If Q or q only, print:
+   Loop ended.
+   Leave the loop and finish.
+5. Any other text is a new goal. Run plan-call-review:
+   - First LLM call: question + date + tool list + query rules. No preselected tool.
+   - Call only valid named tools.
+   - Later LLM calls: question + tool list + data sample. LLM may pick another valid tool or {"done": true}.
+   - Never call tool None.
+   - Then Chef says (loop).
+   - Blank line, then the question prompt again.
+
+Keep LLM_API_KEY from the environment. Never print the key.
+Do not use a venv.
+Do not add a new MCP server tree to this project.
+Do not change step 1 or step 2 output above the MCP section.
+
+Leave MCP_SERVER_PY in Agent.py exactly as:
+MCP_SERVER_PY = r"PUT-THE-MCP-FOLDER-HERE\server.py"
+Do not replace that placeholder in code.
+
+Update README with:
+- Edit MCP_SERVER_PY in Agent.py to the standalone server.py path
+- STDIO: python Agent.py, choose 1
+- HTTP: server folder python server.py --http, then here python Agent.py, choose 2
+- After the three invoices, ask more questions. Type Q to quit.
+- Planner maps years and singular/plural item words. Invalid or null tool names are skipped, not sent to MCP.
+
+After editing, remind me (do not do these yourself):
+1. I must replace PUT-THE-MCP-FOLDER-HERE with the real folder that contains server.py.
+2. I must confirm MCP_HTTP_URL is http://127.0.0.1:8765/mcp
+3. I must run: python Agent.py
